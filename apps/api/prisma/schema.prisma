@@ -1,0 +1,227 @@
+// BackupHub - esquema de base de datos
+// Fase 1: se define la estructura de tablas sugerida en la especificación.
+// Los modelos se irán completando/ajustando en cada fase (auth, agentes,
+// planes, ejecuciones, restauración, inventario...).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // usar "sqlite" en desarrollo si se prefiere
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum AgentStatus {
+  ONLINE
+  OFFLINE
+  UNKNOWN
+}
+
+enum AgentOs {
+  WINDOWS
+  LINUX
+  MACOS
+}
+
+enum DestinationType {
+  USB
+  NAS
+  LOCAL_DISK
+  FOLDER
+  SERVER
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole @default(MEMBER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  backupPlans BackupPlan[]
+  tokens      Token[]
+
+  @@map("users")
+}
+
+model Token {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  hashedKey String   @unique
+  lastUsed  DateTime?
+  createdAt DateTime @default(now())
+  expiresAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tokens")
+}
+
+model Agent {
+  id            String      @id @default(cuid())
+  name          String
+  os            AgentOs
+  version       String
+  status        AgentStatus @default(UNKNOWN)
+  lastSeenAt    DateTime?
+  capacityBytes BigInt?
+  freeBytes     BigInt?
+  apiUrl        String
+  authToken     String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  sources      Source[]
+  backupPlans  BackupPlan[]
+
+  @@map("agents")
+}
+
+model BackupPlan {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  schedule       String? // expresión cron
+  versioningMax  Int      @default(10)
+  compression    Boolean  @default(false)
+  encryption     Boolean  @default(true)
+  excludeFilters String[] @default([])
+  tags           String[] @default([])
+  status         String   @default("active")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  agentId String
+  agent   Agent  @relation(fields: [agentId], references: [id])
+
+  sources      Source[]
+  destinations Destination[]
+  executions   Execution[]
+
+  @@map("backup_plans")
+}
+
+model Source {
+  id     String @id @default(cuid())
+  path   String
+
+  agentId String
+  agent   Agent  @relation(fields: [agentId], references: [id])
+
+  backupPlanId String
+  backupPlan   BackupPlan @relation(fields: [backupPlanId], references: [id], onDelete: Cascade)
+
+  @@map("sources")
+}
+
+model Destination {
+  id   String          @id @default(cuid())
+  type DestinationType
+  path String
+
+  backupPlanId String
+  backupPlan   BackupPlan @relation(fields: [backupPlanId], references: [id], onDelete: Cascade)
+
+  @@map("destinations")
+}
+
+model Execution {
+  id           String          @id @default(cuid())
+  status       ExecutionStatus @default(PENDING)
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  filesTotal   Int?
+  bytesTotal   BigInt?
+  errorMessage String?
+  logs         String?
+
+  backupPlanId String
+  backupPlan   BackupPlan @relation(fields: [backupPlanId], references: [id])
+
+  versions Version[]
+
+  @@map("executions")
+}
+
+model Version {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  executionId String
+  execution   Execution @relation(fields: [executionId], references: [id])
+
+  files File[]
+
+  @@map("versions")
+}
+
+model File {
+  id           String   @id @default(cuid())
+  path         String
+  sizeBytes    BigInt
+  sha256       String
+  modifiedAt   DateTime
+  backedUpAt   DateTime @default(now())
+  status       String   @default("synced")
+
+  versionId String
+  version   Version @relation(fields: [versionId], references: [id])
+
+  @@index([path])
+  @@map("files")
+}
+
+model Alert {
+  id        String        @id @default(cuid())
+  severity  AlertSeverity @default(INFO)
+  message   String
+  resolved  Boolean       @default(false)
+  createdAt DateTime      @default(now())
+
+  @@map("alerts")
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+
+  @@map("settings")
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  level     String
+  message   String
+  context   String?
+  createdAt DateTime @default(now())
+
+  @@map("logs")
+}

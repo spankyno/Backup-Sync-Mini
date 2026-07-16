@@ -1,0 +1,79 @@
+version: "3.9"
+
+# BackupHub - orquestación para desarrollo/producción del lado servidor.
+# El Backup Agent NO se ejecuta aquí: se instala localmente en cada
+# equipo que se quiere respaldar y expone su propia API en localhost.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: backuphub-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: backuphub
+      POSTGRES_PASSWORD: backuphub
+      POSTGRES_DB: backuphub
+    ports:
+      - "5432:5432"
+    volumes:
+      - backuphub_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U backuphub"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    container_name: backuphub-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://backuphub:backuphub@postgres:5432/backuphub?schema=public
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./apps/api:/app/apps/api
+      - /app/apps/api/node_modules
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    container_name: backuphub-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    env_file:
+      - .env
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web:/app/apps/web
+      - /app/apps/web/node_modules
+
+  # Cloudflare Tunnel: expone `api` a internet con TLS gestionado por
+  # Cloudflare, sin abrir puertos en el host. Requiere TUNNEL_TOKEN en
+  # .env (ver docs/cloudflare-tunnel.md para crear el túnel).
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: backuphub-cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
+    depends_on:
+      - api
+    profiles:
+      - tunnel
+
+volumes:
+  backuphub_postgres_data:
