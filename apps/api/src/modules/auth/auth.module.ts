@@ -3,7 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { PrismaService } from '../../prisma.service'; // Asegúrate de que esta ruta apunte a tu servicio de Prisma
+import { PrismaService } from '../../prisma.service'; // Asegúrate de que PrismaService existe en src/prisma.service.ts
 
 @Module({
   imports: [
@@ -18,4 +18,3 @@ import { PrismaService } from '../../prisma.service'; // Asegúrate de que esta 
   exports: [AuthService],
 })
 export class AuthModule {}
- 
