@@ -1,6 +1,6 @@
 # BackupHub
 
-> Aplicación web moderna que controla uno o varios **Backup Agents**
+> Aplicación web moderna que controla uno o varios **Backup Agents** 
 > locales. Local-first, offline-first, seguridad por defecto.
 
 BackupHub no es una app de escritorio tradicional: toda la experiencia
