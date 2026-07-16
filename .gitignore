@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+target/
+
+# Turborepo
+.turbo/
+
+# Cloudflare / OpenNext
+.open-next/
+.wrangler/
+apps/web/cloudflare-env.d.ts
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Rust
+apps/agent/target/
+Cargo.lock
+
+# Prisma
+apps/api/prisma/dev.db
+apps/api/prisma/dev.db-journal
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+
+# Misc
+*.tsbuildinfo
