@@ -12,6 +12,7 @@ import { RestoreModule } from "./modules/restore/restore.module";
 import { InventoryModule } from "./modules/inventory/inventory.module";
 import { SettingsModule } from "./modules/settings/settings.module";
 import { UsersModule } from "./modules/users/users.module";
+import { DashboardModule } from "./modules/dashboard/dashboard.module";
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { UsersModule } from "./modules/users/users.module";
     RestoreModule,
     InventoryModule,
     SettingsModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}

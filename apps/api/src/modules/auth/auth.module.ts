@@ -1,20 +1,32 @@
-import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { PrismaService } from '../../prisma.service'; // Asegúrate de que PrismaService existe en src/prisma.service.ts
+import { Module } from "@nestjs/common";
+import { JwtModule } from "@nestjs/jwt";
+import { PassportModule } from "@nestjs/passport";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { AuthService } from "./auth.service";
+import { AuthController } from "./auth.controller";
+import { JwtStrategy } from "./strategies/jwt.strategy";
+import { UsersModule } from "../users/users.module";
+// PrismaService es @Global() (ver src/prisma/prisma.module.ts) y ya
+// está disponible en todo el árbol de módulos sin necesidad de
+// importarlo aquí ni añadirlo a `providers`.
 
 @Module({
   imports: [
     PassportModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'change-me-in-production',
-      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '15m' },
+    UsersModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get<string>("JWT_SECRET") ?? "change-me-in-production",
+        signOptions: {
+          expiresIn: config.get<string>("JWT_EXPIRES_IN") ?? "15m",
+        },
+      }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, PrismaService],
+  providers: [AuthService, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

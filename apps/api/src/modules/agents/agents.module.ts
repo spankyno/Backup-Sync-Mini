@@ -1,6 +1,10 @@
 import { Module } from "@nestjs/common";
+import { AgentsController } from "./agents.controller";
+import { AgentsService } from "./agents.service";
 
-// Fase 2+: se completara con controllers, services y providers propios
-// de este dominio, siguiendo DDD ligero (un modulo = un bounded context).
-@Module({})
+@Module({
+  controllers: [AgentsController],
+  providers: [AgentsService],
+  exports: [AgentsService],
+})
 export class AgentsModule {}

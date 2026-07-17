@@ -6,6 +6,7 @@ const nextConfig = {
     "@backuphub/types",
     "@backuphub/shared",
     "@backuphub/config",
+    "@backuphub/auth",
   ],
   experimental: {
     optimizePackageImports: ["lucide-react"],

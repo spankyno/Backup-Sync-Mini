@@ -5,16 +5,23 @@ RUN corepack enable && corepack prepare pnpm@9.1.0 --activate
 WORKDIR /app
 
 FROM base AS deps
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* turbo.json tsconfig.base.json ./
 COPY apps/api/package.json ./apps/api/package.json
+COPY apps/web/package.json ./apps/web/package.json
+COPY apps/agent/Cargo.toml ./apps/agent/Cargo.toml
 COPY packages ./packages
-RUN pnpm install --frozen-lockfile --filter @backuphub/api...
+# Instalacion completa (no filtrada): la API depende en build-time de
+# @backuphub/types, config, auth y shared, que a su vez necesitan sus
+# propias devDependencies (typescript) para compilar.
+RUN pnpm install --frozen-lockfile
 
 FROM base AS build
 COPY --from=deps /app /app
 COPY apps/api ./apps/api
 RUN pnpm --filter @backuphub/api prisma:generate
-RUN pnpm --filter @backuphub/api build
+# Construye primero los packages de los que depende la API (turbo
+# resuelve el orden via su grafo de dependencias) y despues la API.
+RUN pnpm exec turbo run build --filter=@backuphub/api...
 
 FROM base AS runtime
 ENV NODE_ENV=production
