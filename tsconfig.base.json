@@ -15,20 +15,7 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "declaration": true,
-    "declarationMap": true,
-    "baseUrl": ".",
-    "paths": {
-      "@backuphub/ui": ["packages/ui/src/index.ts"],
-      "@backuphub/ui/*": ["packages/ui/src/*"],
-      "@backuphub/types": ["packages/types/src/index.ts"],
-      "@backuphub/types/*": ["packages/types/src/*"],
-      "@backuphub/config": ["packages/config/src/index.ts"],
-      "@backuphub/config/*": ["packages/config/src/*"],
-      "@backuphub/auth": ["packages/auth/src/index.ts"],
-      "@backuphub/auth/*": ["packages/auth/src/*"],
-      "@backuphub/shared": ["packages/shared/src/index.ts"],
-      "@backuphub/shared/*": ["packages/shared/src/*"]
-    }
+    "declarationMap": true
   },
   "exclude": ["node_modules", "dist", ".next", "target"]
 }
