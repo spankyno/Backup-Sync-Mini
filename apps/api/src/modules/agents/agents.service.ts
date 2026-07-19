@@ -106,6 +106,38 @@ export class AgentsService {
     );
   }
 
+  /**
+   * Proxea el listado de carpetas del agente (Paso 1 del wizard de
+   * planes de backup). La Web nunca llama al agente directamente: pasa
+   * siempre por aquí, que además adjunta el token guardado del agente.
+   */
+  async browseFilesystem(id: string, path?: string) {
+    const agent = await this.findOne(id);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), PING_TIMEOUT_MS);
+
+    try {
+      const url = new URL(`${agent.apiUrl.replace(/\/$/, "")}/api/v1/filesystem/browse`);
+      if (path) url.searchParams.set("path", path);
+
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: { Authorization: `Bearer ${agent.authToken}` },
+      });
+      if (!res.ok) {
+        throw new Error(`El agente respondió con estado ${res.status}`);
+      }
+      return await res.json();
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : "error desconocido";
+      throw new BadRequestException(
+        `No se pudo listar carpetas en "${agent.name}": ${reason}`,
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
   private async pingAgent(apiUrl: string, authToken?: string): Promise<AgentHealthResponse> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), PING_TIMEOUT_MS);

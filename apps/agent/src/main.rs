@@ -4,10 +4,23 @@ mod crypto;
 mod storage;
 
 use axum::{routing::get, Router};
+use sqlx::sqlite::SqlitePool;
+use std::collections::HashMap;
 use std::net::SocketAddr;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use tokio_util::sync::CancellationToken;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::EnvFilter;
+
+/// Estado compartido entre handlers HTTP: el pool de SQLite local y el
+/// registro de ejecuciones en curso (para poder cancelarlas).
+#[derive(Clone)]
+pub struct AppState {
+    pub pool: SqlitePool,
+    pub executions: Arc<Mutex<HashMap<String, CancellationToken>>>,
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -22,11 +35,20 @@ async fn main() -> anyhow::Result<()> {
         .and_then(|p| p.parse().ok())
         .unwrap_or(3845);
 
-    storage::db::init_pool().await?;
+    let pool = storage::db::init_pool().await?;
+    let state = AppState {
+        pool,
+        executions: Arc::new(Mutex::new(HashMap::new())),
+    };
 
     let app = Router::new()
         .route("/health", get(api::health::check))
-        .nest("/api/v1", api::routes::router())
+        .nest(
+            "/api/v1",
+            api::routes::router()
+                .layer(axum::middleware::from_fn(api::auth::require_token)),
+        )
+        .with_state(state)
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http());
 

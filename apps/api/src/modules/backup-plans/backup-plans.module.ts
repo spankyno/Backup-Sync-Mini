@@ -1,6 +1,11 @@
 import { Module } from "@nestjs/common";
+import { BackupPlansController } from "./backup-plans.controller";
+import { BackupPlansService } from "./backup-plans.service";
+import { ExecutionsModule } from "../executions/executions.module";
 
-// Fase 2+: se completara con controllers, services y providers propios
-// de este dominio, siguiendo DDD ligero (un modulo = un bounded context).
-@Module({})
+@Module({
+  imports: [ExecutionsModule],
+  controllers: [BackupPlansController],
+  providers: [BackupPlansService],
+})
 export class BackupPlansModule {}

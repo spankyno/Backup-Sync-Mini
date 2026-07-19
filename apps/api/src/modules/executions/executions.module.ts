@@ -1,6 +1,10 @@
 import { Module } from "@nestjs/common";
+import { ExecutionsController } from "./executions.controller";
+import { ExecutionsService } from "./executions.service";
 
-// Fase 2+: se completara con controllers, services y providers propios
-// de este dominio, siguiendo DDD ligero (un modulo = un bounded context).
-@Module({})
+@Module({
+  controllers: [ExecutionsController],
+  providers: [ExecutionsService],
+  exports: [ExecutionsService],
+})
 export class ExecutionsModule {}

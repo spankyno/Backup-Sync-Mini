@@ -19,6 +19,12 @@ export function Navbar() {
           <Link href="/equipos" className="hover:text-foreground">
             Equipos
           </Link>
+          <Link href="/planes" className="hover:text-foreground">
+            Planes
+          </Link>
+          <Link href="/historial" className="hover:text-foreground">
+            Historial
+          </Link>
         </nav>
       </div>
       <div className="flex items-center gap-4">

@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
@@ -39,6 +40,11 @@ export class AgentsController {
   @Patch(":id")
   update(@Param("id") id: string, @Body() dto: UpdateAgentDto) {
     return this.agentsService.update(id, dto);
+  }
+
+  @Get(":id/filesystem")
+  browseFilesystem(@Param("id") id: string, @Query("path") path?: string) {
+    return this.agentsService.browseFilesystem(id, path);
   }
 
   @Post(":id/sync")

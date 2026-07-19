@@ -1,26 +1,34 @@
-use axum::{routing::get, Router};
+use axum::{
+    routing::{get, post},
+    Router,
+};
+use super::{backups, filesystem};
+use crate::AppState;
 
-// Fase 6: aqui se anadiran los endpoints reales del motor de backup
-// (listar carpetas, iniciar/cancelar ejecuciones, progreso via WS,
-// restauracion, verificacion de integridad, etc). Por ahora se deja
-// el esqueleto de rutas agrupado por dominio.
+// El listado de carpetas (Fase 5) y el motor de backup (Fase 6) ya son
+// funcionales. La restauracion (Fase 8) sigue como placeholder.
 
-pub fn router() -> Router {
+pub fn router() -> Router<AppState> {
     Router::new()
         .nest("/filesystem", filesystem_routes())
         .nest("/backups", backups_routes())
         .nest("/restore", restore_routes())
 }
 
-fn filesystem_routes() -> Router {
-    Router::new().route("/browse", get(placeholder))
+fn filesystem_routes() -> Router<AppState> {
+    Router::new().route("/browse", get(filesystem::browse))
 }
 
-fn backups_routes() -> Router {
-    Router::new().route("/", get(placeholder))
+fn backups_routes() -> Router<AppState> {
+    Router::new()
+        .route("/", post(backups::start))
+        .route("/:id", get(backups::status))
+        .route("/:id/logs", get(backups::logs))
+        .route("/:id/files", get(backups::files))
+        .route("/:id/cancel", post(backups::cancel))
 }
 
-fn restore_routes() -> Router {
+fn restore_routes() -> Router<AppState> {
     Router::new().route("/", get(placeholder))
 }
 
