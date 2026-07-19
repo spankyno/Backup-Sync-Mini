@@ -63,6 +63,7 @@ export interface BackupPlan {
   tags: string[];
   status: string;
   agentId: string;
+  agent?: Agent;
   sources: Source[];
   destinations: Destination[];
   createdAt: string;
